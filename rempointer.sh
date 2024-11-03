@@ -2,14 +2,16 @@
 
 set -e
 
+VERSION="0.4.0"
 KAIROS_USER="${KAIROS_USER:-}"
 KAIROS_PASS="${KAIROS_PASS:-}"
 KAIROS_DATE="$(date +"%d-%m-%Y %H:%M:00")"
+CURRENT_DATE="$(date +"%Y-%m-%d-%H.%M.%S")"
 LOGDIR="${HOME}/mylogs"
 COMPDIR="${HOME}/mylogs/comprovantes"
 LOGFILE="${LOGDIR}/kairos.log"
-DEBUG_LOG="${LOGDIR}/$(date +"%Y-%m-%d-%H.%M.%S")"
-COMPROVANTE="${COMPDIR}/comprovante-$(date +"%Y-%m-%d-%H.%M.%S")".pdf
+DEBUG_LOG="${LOGDIR}/${CURRENT_DATE}"
+COMPROVANTE="${COMPDIR}/comprovante-${CURRENT_DATE}.pdf"
 
 USER_AGENT='Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0'
 
@@ -30,7 +32,12 @@ TELEGRAM_USER_ID=
 
 
 usage() {
-  printf 'Usage: %s -u <email> -p <password>\n' "${0}" >&2
+  printf "Usage:
+    -u  Kairos email
+    -p  Kairos Password
+    -v  Versao do script
+    \n\rExample:
+     "${0}" -u <email> -p <password>\n"
   exit 0
 }
 
@@ -65,51 +72,74 @@ die() {
   exit 1
 }
 
-while getopts ":h:u:p:" o; do
-  case "${o}" in
-  u)
-    KAIROS_USER="${OPTARG}"
-    ;;
-  p)
-    KAIROS_PASS="${OPTARG}"
-    ;;
-  *)
+get_cookie() {
+  curl -sL -c "${COOKIE}" -e "${URL}" -A "${USER_AGENT}" "${URL}" \
+    -o "${DEBUG_LOG}"-01.stdout 2> "${DEBUG_LOG}"-01.stderr || \
+    die "Falha ao baixar o cookie"
+  [ -s  "${DEBUG_LOG}"-01.stderr ] || rm -f "${DEBUG_LOG}"-01.stderr
+}
+
+punch_clock() {
+  printf 'Batendo Ponto em: %s\n' "${KAIROS_DATE}"
+  curl -sL -b "${COOKIE}" -e "${URL}" -A "${USER_AGENT}" \
+       -d "UserName=${KAIROS_USER}" \
+       --data-urlencode "Password=${KAIROS_PASS}" \
+       --data-urlencode "DateMarking=${KAIROS_DATE}" \
+       -d "Ip=false" \
+       "${URL}" \
+       -o "${DEBUG_LOG}"-02.stdout 2> "${DEBUG_LOG}"-02.stderr
+  [ -s  "${DEBUG_LOG}"-02.stderr ] || rm -f "${DEBUG_LOG}"-02.stderr
+  grep -q 'Usuário e/ou senha estão incorretos' "${DEBUG_LOG}"-02.stdout \
+    && die "Usuário e/ou senha estão incorretos"
+}
+
+punch_save() {
+  printf 'Salvando Comprovante: %s\n' "${COMPROVANTE}"
+  curl -so "${COMPROVANTE}" \
+    "$(grep -E 'href="https://storage.*dimepbr-comprovanteponto.*pdf.' \
+    "${DEBUG_LOG}"-02.stdout 2> "${DEBUG_LOG}"-03.stdout | awk -F'[><]' \
+    '{print $3}'|head -1)" || die "Falha ao salvar comprovante"
+  [ -s  "${DEBUG_LOG}"-03.stderr ] || rm -f "${DEBUG_LOG}"-03.stderr
+  tg_send_pdf "${COMPROVANTE}" "Comprovante ${KAIROS_DATE}"
+  
+  echo "[$(date)] ${KAIROS_DATE}" >> "${LOGFILE}"
+  tg_send_message "Ponto registrado com successo - ${KAIROS_DATE}"
+}
+
+version() {
+  echo "Versao:${VERSION}"
+}
+
+main() {
+  while getopts ":h:u:p:v" o; do
+    case "${o}" in
+    u)
+      KAIROS_USER="${OPTARG}"
+      ;;
+    p)
+      KAIROS_PASS="${OPTARG}"
+      ;;
+    v)
+      version
+      ;;
+    *)
+      usage
+      ;;
+    esac
+  done
+  if [ "$1" = "-v" ]; then 
+    exit 0
+  fi
+  if [ -z "$KAIROS_USER" ] || [ -z "$KAIROS_PASS" ]; then
     usage
-    ;;
-  esac
-done
+  fi
+  
+  mkdir -p "${LOGDIR}" "${COMPDIR}" 
+  get_cookie
+  punch_clock
+  punch_save
+}
 
-if [ -z "$KAIROS_USER" ] || [ -z "$KAIROS_PASS" ]; then
-  usage
-fi
-
-mkdir -p "${LOGDIR}"
-
-curl -sL -c "${COOKIE}" -e "${URL}" -A "${USER_AGENT}" "${URL}" \
-  -o "${DEBUG_LOG}"-01.stdout 2> "${DEBUG_LOG}"-01.stderr
-[ -s  "${DEBUG_LOG}"-01.stderr ] || rm -f "${DEBUG_LOG}"-01.stderr
-
-printf 'Batendo Ponto em: %s\n' "${KAIROS_DATE}"
-curl -sL -b "${COOKIE}" -e "${URL}" -A "${USER_AGENT}" \
-     -d "UserName=${KAIROS_USER}" \
-     --data-urlencode "Password=${KAIROS_PASS}" \
-     --data-urlencode "DateMarking=${KAIROS_DATE}" \
-     -d "Ip=false" \
-     "${URL}" \
-     -o "${DEBUG_LOG}"-02.stdout 2> "${DEBUG_LOG}"-02.stderr
-[ -s  "${DEBUG_LOG}"-02.stderr ] || rm -f "${DEBUG_LOG}"-02.stderr
-
-
-grep -q 'Usuário e/ou senha estão incorretos' "${DEBUG_LOG}"-02.stdout \
-  && die "Usuário e/ou senha estão incorretos"
-
-printf 'Salvando Comprovante: %s\n' "${COMPROVANTE}"
-curl -so "${COMPROVANTE}" \
-  "$(grep -E 'href="https://storage.*dimepbr-comprovanteponto.*pdf.' \
-  "${DEBUG_LOG}"-02.stdout|awk -F'>' '{print $2}'|awk -F'<' '{print $1}'|head -1)"
-tg_send_pdf "${COMPROVANTE}" "Comprovante ${KAIROS_DATE}"
-
-echo "[$(date)] ${KAIROS_DATE}" >> "${LOGFILE}"
-tg_send_message "Ponto registrado com successo - ${KAIROS_DATE}"
+main "$@"
 
 # vim:set ts=2 sw=2 et:
