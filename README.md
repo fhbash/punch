@@ -1,5 +1,6 @@
 # rempointer
 
+![Banner](./art/banner.png)
 The Auto Remote Punch Clock
 
 Have you being forced to punch the clock and constantly submit time sheets?  
@@ -10,8 +11,8 @@ Have you being forced to punch the clock and constantly submit time sheets?
 - Punching the Clock using the current time
 
 ```shell
-chmod +x ./rempointer.sh
-rempointer.sh -u email -p password
+chmod +x ./scripts/rempointer.sh
+./scripts/rempointer.sh -u email -p password
 ```
 
 _at the moment rempointer only offers support to punch the clock using the dimep
