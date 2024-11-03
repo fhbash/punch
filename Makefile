@@ -8,8 +8,8 @@ help: ## - print the help and usage
 
 .PHONY: install
 install: ## - install rempointer
-	ansible-playbook ./setup/ansible/plays/install.yml --tags install
+	ansible-playbook ./setup/ansible/plays/setup.yml --tags install
 
 .PHONY: uninstall
 uninstall: ## - uninstall rempointer
-	ansible-playbook ./setup/ansible/plays/install.yml --tags uninstall
+	ansible-playbook ./setup/ansible/plays/setup.yml --tags uninstall

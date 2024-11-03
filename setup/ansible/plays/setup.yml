@@ -4,8 +4,50 @@
   gather_facts: false
   vars:
     install_dir:
-      "{{ lookup('env', 'RP_INSTALL_DIR') |
-      default(lookup('env', 'HOME')~'/bin', true) }}"
+      "{{
+          lookup('env', 'RP_INSTALL_DIR') |
+          default(lookup('env', 'HOME')~'/bin', true)
+      }}"
+
+    systemd_dir:
+      "{{
+          lookup('env', 'RP_INSTALL_SVC') |
+          default(lookup('env', 'HOME')~'/.config/systemd/user', true)
+      }}"
+
+    dirs:
+      - "{{ install_dir }}"
+      - "{{ systemd_dir }}"
+
+    range_window:
+      "{{
+          lookup('env', 'RP_RANGE_WINDOW') |
+          default('1200', true)
+      }}"
+
+    punch_start:
+      "{{
+          lookup('env', 'RP_PUNCH_START') |
+          default('08:00', true)
+      }}"
+
+    punch_end:
+      "{{
+          lookup('env', 'RP_PUNCH_END') |
+          default('17:20', true)
+      }}"
+
+  handlers:
+    - name: "Reloading SystemD Daemon"
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        scope: user
+      listen: user-daemon-reload
+
+    - name: "SystemD Reset Failed"
+      ansible.builtin.shell:
+        cmd: systemctl --user reset-failed
+      listen: user-reset-failed
 
   tasks:
     - name: "Install Block"
@@ -13,24 +55,63 @@
         - install
         - never
       block:
-        - name: "Ensuring Install Dir Exists"
+        - name: "Ensuring Directory Exists"
           ansible.builtin.file:
-            path: "{{ install_dir }}"
+            path: "{{ item }}"
             state: directory
             mode: 0755
+          loop: "{{ dirs }}"
 
-        - name: "Installing Rempointer"
+        - name: "Installing Rempointer Script"
           ansible.builtin.template:
             src: ../../../scripts/rempointer.sh
             dest: "{{ install_dir }}/rempointer.sh"
             mode: 0755
+
+        - name: "Enable timers to run without login"
+          ansible.builtin.shell:
+            cmd: loginctl enable-linger "{{ lookup('env', 'USERNAME') }}"
+
+        - name: "Installing Rempointer SystemD Timer"
+          ansible.builtin.template:
+            src: "{{ item }}"
+            dest: "{{ systemd_dir }}"
+            mode: 0644
+          loop:
+            - ../../../conf/rempointer.service
+            - ../../../conf/rempointer.timer
+
+        - name: "Enabling User Rempointer Timer"
+          ansible.builtin.systemd_service:
+            name: rempointer.timer
+            state: started
+            scope: user
+            enabled: true
+            daemon_reload: true
 
     - name: "Uninstall Block"
       tags:
         - uninstall
         - never
       block:
-        - name: "Installing Rempointer"
+        - name: "Disabling Rempointer Timers"
+          ansible.builtin.systemd_service:
+            name: rempointer.timer
+            state: stopped
+            scope: user
+            enabled: false
+
+        - name: "Removing Rempointer Installed Files"
           ansible.builtin.file:
-            path: "{{ install_dir }}/rempointer.sh"
+            path: "{{ item }}"
             state: absent
+          loop:
+            - "{{ systemd_dir }}/rempointer.service"
+            - "{{ systemd_dir }}/rempointer.timer"
+            - "{{ install_dir }}/rempointer.sh"
+          notify:
+            - user-daemon-reload
+            - user-reset-failed
+
+        - name: "Flusing Handlers"
+          ansible.builtin.meta: flush_handlers

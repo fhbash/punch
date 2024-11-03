@@ -1,0 +1,7 @@
+[Unit]
+Description=Rempointer the Auto Remote Punch Clock
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/bash -c 'sleep $((RANDOM % {{ range_window }}))'
+ExecStart="{{ install_dir }}/rempointer.sh"
