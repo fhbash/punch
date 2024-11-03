@@ -6,8 +6,10 @@ KAIROS_USER="${KAIROS_USER:-}"
 KAIROS_PASS="${KAIROS_PASS:-}"
 KAIROS_DATE="$(date +"%d-%m-%Y %H:%M:00")"
 LOGDIR="${HOME}/mylogs"
+COMPDIR="${HOME}/mylogs/comprovantes"
 LOGFILE="${LOGDIR}/kairos.log"
 DEBUG_LOG="${LOGDIR}/$(date +"%Y-%m-%d-%H.%M.%S")"
+COMPROVANTE="${COMPDIR}/comprovante-$(date +"%Y-%m-%d-%H.%M.%S")"
 
 USER_AGENT='Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0'
 
@@ -48,7 +50,7 @@ curl -sL -c "${COOKIE}" -e "${URL}" -A "${USER_AGENT}" "${URL}" \
   -o "${DEBUG_LOG}"-01.stdout 2> "${DEBUG_LOG}"-01.stderr
 [ -s  "${DEBUG_LOG}"-01.stderr ] || rm -f "${DEBUG_LOG}"-01.stderr
 
-
+printf 'Batendo Ponto em: %s\n' "${KAIROS_DATE}"
 curl -sL -b "${COOKIE}" -e "${URL}" -A "${USER_AGENT}" \
      -d "UserName=${KAIROS_USER}" \
      --data-urlencode "Password=${KAIROS_PASS}" \
@@ -57,6 +59,11 @@ curl -sL -b "${COOKIE}" -e "${URL}" -A "${USER_AGENT}" \
      "${URL}" \
      -o "${DEBUG_LOG}"-02.stdout 2> "${DEBUG_LOG}"-02.stderr
 [ -s  "${DEBUG_LOG}"-02.stderr ] || rm -f "${DEBUG_LOG}"-02.stderr
+
+printf 'Salvando Comprovante: %s\n' "${COMPROVANTE}"
+curl -so "${COMPROVANTE}" \
+  "$(grep -E 'href="https://storage.*dimepbr-comprovanteponto.*pdf.' \
+  "${DEBUG_LOG}"-02.stdout|awk -F'>' '{print $2}'|awk -F'<' '{print $1}'|head -1)"
 
 grep -q 'Usuário e/ou senha estão incorretos' "${DEBUG_LOG}"-02.stdout \
   && die "Usuário e/ou senha estão incorretos"
