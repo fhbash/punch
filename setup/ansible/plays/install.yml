@@ -1,0 +1,36 @@
+---
+- name: "Setup"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    install_dir:
+      "{{ lookup('env', 'RP_INSTALL_DIR') |
+      default(lookup('env', 'HOME')~'/bin', true) }}"
+
+  tasks:
+    - name: "Install Block"
+      tags:
+        - install
+        - never
+      block:
+        - name: "Ensuring Install Dir Exists"
+          ansible.builtin.file:
+            path: "{{ install_dir }}"
+            state: directory
+            mode: 0755
+
+        - name: "Installing Rempointer"
+          ansible.builtin.template:
+            src: ../../../scripts/rempointer.sh
+            dest: "{{ install_dir }}/rempointer.sh"
+            mode: 0755
+
+    - name: "Uninstall Block"
+      tags:
+        - uninstall
+        - never
+      block:
+        - name: "Installing Rempointer"
+          ansible.builtin.file:
+            path: "{{ install_dir }}/rempointer.sh"
+            state: absent
