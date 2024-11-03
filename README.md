@@ -1,5 +1,7 @@
 # rempointer
-
+<div style="position: relative; width: 100%; height: 200px; overflow: hidden; background: rgba(0, 0, 0, 0.5);">
+    <img src="./art/icon.webm" style="width: 100%; opacity: 0.7; filter: brightness(50%);">
+</div>
 The Auto Remote Punch Clock
 
 Have you being forced to punch the clock and constantly submit time sheets?  
