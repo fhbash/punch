@@ -2,7 +2,7 @@
 
 set -e
 
-VERSION="0.4.0"
+VERSION="0.4.1"
 KAIROS_USER="${KAIROS_USER:-}"
 KAIROS_PASS="${KAIROS_PASS:-}"
 KAIROS_DATE="$(date +"%d-%m-%Y %H:%M:00")"
@@ -10,6 +10,7 @@ CURRENT_DATE="$(date +"%Y-%m-%d-%H.%M.%S")"
 LOGDIR="${HOME}/mylogs"
 COMPDIR="${HOME}/mylogs/comprovantes"
 LOGFILE="${LOGDIR}/kairos.log"
+TGLOGFILE="${LOGDIR}/telegram.log"
 DEBUG_LOG="${LOGDIR}/${CURRENT_DATE}"
 COMPROVANTE="${COMPDIR}/comprovante-${CURRENT_DATE}.pdf"
 
@@ -27,8 +28,8 @@ COOKIE="${DEBUG_LOG}".cookie
 # 4. Get also your own user ID, and add to the TELEGRAM_USER_ID below. You
 #    can get your id by talking to @JsonDumpBot -- you are interested in
 #    the "id" field from the "from" object, which is inside "message";
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_USER_ID=
+TELEGRAM_BOT_TOKEN="${TG_TOKEN:-}"
+TELEGRAM_USER_ID="${TG_ID:-}"
 
 
 usage() {
@@ -51,9 +52,9 @@ tg_send_message() {
   has_tg_setup || return 0
 
   msg="${1}"
-  curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_USER_ID}" \
+  curl -sL "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_USER_ID}" \
        --form-string "text=${msg}" \
-       -F "parse_mode=markdown"
+       -F "parse_mode=markdown" -w "\n" >> "${TGLOGFILE}" 2>&1 
 }
 
 tg_send_pdf() {
@@ -61,9 +62,9 @@ tg_send_pdf() {
 
   pdf_path="${1}"
   caption="${2}"
-  curl "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument?chat_id=${TELEGRAM_USER_ID}" \
+  curl -sL "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument?chat_id=${TELEGRAM_USER_ID}" \
        -F "document=@${pdf_path}" \
-       --form-string "caption=${caption}"
+       --form-string "caption=${caption}" -w "\n" >> "${TGLOGFILE}" 2>&1
 }
 
 die() {
@@ -95,15 +96,18 @@ punch_clock() {
 
 punch_save() {
   printf 'Salvando Comprovante: %s\n' "${COMPROVANTE}"
-  curl -so "${COMPROVANTE}" \
-    "$(grep -E 'href="https://storage.*dimepbr-comprovanteponto.*pdf.' \
-    "${DEBUG_LOG}"-02.stdout 2> "${DEBUG_LOG}"-03.stdout | awk -F'[><]' \
-    '{print $3}'|head -1)" || die "Falha ao salvar comprovante"
+  #punch_result="${LOGDIR}/2024-11-01-17.27.45-02.stdout" # valid result file
+  punch_result="${DEBUG_LOG}-02.stdout"
+  pdf_bill="$(grep -E 'href="https://storage.*dimepbr-comprovanteponto.*pdf.' \
+    "${punch_result}" 2> "${DEBUG_LOG}"-03.stdout | awk -F'[><]' \
+    '{print $3}'|head -1)"
+
+  curl -so "${COMPROVANTE}" "${pdf_bill}" || die "Falha ao salvar comprovante"
   [ -s  "${DEBUG_LOG}"-03.stderr ] || rm -f "${DEBUG_LOG}"-03.stderr
   tg_send_pdf "${COMPROVANTE}" "Comprovante ${KAIROS_DATE}"
   
   echo "[$(date)] ${KAIROS_DATE}" >> "${LOGFILE}"
-  tg_send_message "Ponto registrado com successo - ${KAIROS_DATE}"
+  tg_send_message "Ponto registrado com sucesso - ${KAIROS_DATE}"
 }
 
 version() {
