@@ -91,7 +91,9 @@ punch_clock() {
        -o "${DEBUG_LOG}"-02.stdout 2> "${DEBUG_LOG}"-02.stderr
   [ -s  "${DEBUG_LOG}"-02.stderr ] || rm -f "${DEBUG_LOG}"-02.stderr
   grep -q 'Usuário e/ou senha estão incorretos' "${DEBUG_LOG}"-02.stdout \
-    && die "Usuário e/ou senha estão incorretos"
+    && die "Usuário e/ou senha estão incorretos" || \
+    grep -q 'Usuário não encontrado' "${DEBUG_LOG}"-02.stdout && die "Senha Incorreta" || \
+    printf ''
 }
 
 punch_save() {
