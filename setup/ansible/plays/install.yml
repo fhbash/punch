@@ -1,0 +1,33 @@
+---
+- name: "Ensuring Directory Exists"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  loop: "{{ dirs }}"
+
+- name: "Installing Rempointer Scripts"
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ install_scripts.dest }}"
+    mode: 0755
+  loop: "{{ install_scripts.source }}"
+
+- name: "Enable timers to run without login"
+  ansible.builtin.shell:
+    cmd: loginctl enable-linger "{{ ansible_user_id }}"
+
+- name: "Installing Rempointer SystemD Timer"
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ install_services.dest }}"
+    mode: 0644
+  loop: "{{ install_services.source }}"
+
+- name: "Enabling User Rempointer Timer"
+  ansible.builtin.systemd_service:
+    name: rempointer.timer
+    state: started
+    scope: user
+    enabled: true
+    daemon_reload: true
