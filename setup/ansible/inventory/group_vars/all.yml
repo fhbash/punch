@@ -16,14 +16,14 @@ dirs:
 
 install_scripts:
   source:
-    - ../../../scripts/rempointer.sh
-    - ../../../conf/rempointer.conf
+    - ../../../scripts/punch.sh
+    - ../../../conf/punch.conf
   dest: "{{ install_dir }}"
 
 install_services:
   source:
-    - ../../../conf/rempointer.service
-    - ../../../conf/rempointer.timer
+    - ../../../conf/punch.service
+    - ../../../conf/punch.timer
   dest: "{{ systemd_dir }}"
 
 range_window:

@@ -1,0 +1,9 @@
+---
+- name: "Enabling User punch Timer"
+  ansible.builtin.systemd_service:
+    name: punch.timer
+    state: started
+    scope: user
+    enabled: true
+    daemon_reload: true
+    daemon_reexec: true

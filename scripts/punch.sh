@@ -2,7 +2,7 @@
 
 set -e
 
-VERSION="0.4.1"
+VERSION="0.5.0"
 CONF="${RP_CONF:-}"
 KAIROS_USER="${KAIROS_USER:-}"
 KAIROS_PASS="${KAIROS_PASS:-}"
@@ -153,7 +153,7 @@ main() {
   
   mkdir -p "${LOGDIR}" "${COMPDIR}" 
   get_cookie
-  #punch_clock
+  punch_clock
   punch_save
 }
 

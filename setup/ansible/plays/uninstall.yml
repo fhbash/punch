@@ -1,20 +1,17 @@
 ---
-- name: "Disabling Rempointer Timers"
-  ansible.builtin.systemd_service:
-    name: rempointer.timer
-    state: stopped
-    scope: user
-    enabled: false
+- name: "Including Disable Punch Timers"
+  ansible.builtin.include_tasks:
+    file: ./disable.yml
 
-- name: "Removing Rempointer Installed Files"
+- name: "Removing punch Installed Files"
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
   loop:
-    - "{{ systemd_dir }}/rempointer.service"
-    - "{{ systemd_dir }}/rempointer.timer"
-    - "{{ install_dir }}/rempointer.sh"
-    - "{{ install_dir }}/rempointer.conf"
+    - "{{ systemd_dir }}/punch.service"
+    - "{{ systemd_dir }}/punch.timer"
+    - "{{ install_dir }}/punch.sh"
+    - "{{ install_dir }}/punch.conf"
   notify:
     - user-daemon-reload
     - user-reset-failed

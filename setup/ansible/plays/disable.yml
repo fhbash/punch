@@ -1,0 +1,12 @@
+---
+- name: "Disabling punch Timers"
+  ansible.builtin.systemd_service:
+    name: punch.timer
+    state: stopped
+    scope: user
+    enabled: false
+    daemon_reload: true
+    daemon_reexec: true
+  notify:
+    - user-daemon-reload
+    - user-reset-failed

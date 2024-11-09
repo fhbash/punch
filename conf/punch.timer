@@ -1,0 +1,10 @@
+[Unit]
+Description=Punch the Clock on Schedule
+
+[Timer]
+OnCalendar=Mon..Fri {{ punch_start }}
+OnCalendar=Mon..Fri {{ punch_end }}
+Unit=punch.service
+
+[Install]
+WantedBy=timers.target
