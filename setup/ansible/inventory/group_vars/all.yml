@@ -1,0 +1,50 @@
+---
+install_dir:
+  "{{ ansible_user_dir~'/bin' |
+      default(lookup('env', 'RP_INSTALL_DIR') , true)
+  }}"
+
+systemd_dir:
+  "{{
+      ansible_user_dir~'/.config/systemd/user' |
+      default(lookup('env', 'RP_INSTALL_SVC') , true)
+  }}"
+
+dirs:
+  - "{{ install_dir }}"
+  - "{{ systemd_dir }}"
+
+install_scripts:
+  source:
+    - ../../../scripts/rempointer.sh
+    - ../../../conf/rempointer.conf
+  dest: "{{ install_dir }}"
+
+install_services:
+  source:
+    - ../../../conf/rempointer.service
+    - ../../../conf/rempointer.timer
+  dest: "{{ systemd_dir }}"
+
+range_window:
+  "{{
+      lookup('env', 'RP_RANGE_WINDOW') |
+      default('1200', true)
+  }}"
+
+punch_start:
+  "{{
+      lookup('env', 'RP_PUNCH_START') |
+      default('08:00', true)
+  }}"
+
+punch_end:
+  "{{
+      lookup('env', 'RP_PUNCH_END') |
+      default('17:20', true)
+  }}"
+
+tg_id: "{{ lookup('env', 'RP_TG_ID') }}"
+tg_token: "{{ lookup('env', 'RP_TG_TOKEN') }}"
+kairos_user: "{{ lookup('env', 'KAIROS_USER') }}"
+kairos_pass: "{{ lookup('env', 'KAIROS_PASS') }}"

@@ -1,0 +1,23 @@
+---
+- name: "Disabling Rempointer Timers"
+  ansible.builtin.systemd_service:
+    name: rempointer.timer
+    state: stopped
+    scope: user
+    enabled: false
+
+- name: "Removing Rempointer Installed Files"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ systemd_dir }}/rempointer.service"
+    - "{{ systemd_dir }}/rempointer.timer"
+    - "{{ install_dir }}/rempointer.sh"
+    - "{{ install_dir }}/rempointer.conf"
+  notify:
+    - user-daemon-reload
+    - user-reset-failed
+
+- name: "Flusing Handlers"
+  ansible.builtin.meta: flush_handlers

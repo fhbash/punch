@@ -31,7 +31,7 @@ where the rabbit will be with the next automated installer features to come_
 first.](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#pip-install)
 * `GNU/Make 4.4+` - After installing ansible make sure you have GNU/Make installed.
 
-**Installer Instrcutions:**  
+#### Install Locally: 
 
 * _Installs by default in $HOME/bin use `export RP_INSTALL_DIR=/my/path` to use
   a custom path_  
@@ -46,7 +46,80 @@ make install
 make uninstall
 ```  
 
-**Additional Installer Variables:**  
+##### Install Locally Examples:
+
+_Installing locally and customizing a few settings:_  
+
+```bash
+KAIROS_USER="my_user" \
+KAIROS_USER="my_pass" \
+RP_INSTALL_DIR="$HOME/my/custom/path" \
+RP_TG_ID="my_telegram_user_id" \
+RP_TG_TOKEN="my_telegram_bot_token" \
+make install
+```
+
+To avoid leaking secrets into scripts, you can use vault,
+bitwarden or secret-tool, example:
+
+```bash
+KAIROS_USER="\$(secret-tool lookup kairos user)" \
+KAIROS_PASS="\$(secret-tool lookup kairos pass)" \
+make install
+```
+
+## Deploy:
+
+It's also possible to deploy punch scripts into a remote machine, using ansible
+inventory fashion.
+
+1. Adding your host into the inventory:  
+```bash
+echo "my-host.example.com" > ./setup/ansible/inventory/myhost
+```
+
+2. Check that your host is reachable:  
+```bash
+ansible my-host.example.com -m ping
+```
+
+3. Deploy to your host:  
+```bash
+make deploy my-host.example.com
+```
+
+_Like the install method, deploy also support customizing the variables e.g.:_  
+
+```bash
+KAIROS_USER="\$(secret-tool lookup kairos user)" \
+KAIROS_PASS="\$(secret-tool lookup kairos pass)" \
+make deploy
+```
+
+#### The Inventory:  
+
+* `[./setup/ansible/inventory`](./setup/ansible/inventory) - this is the main
+  inventory directory. 
+
+  [Ansible inventory
+  files](https://docs.ansible.com/ansible/latest/cli/ansible-inventory.html) can
+  be created on this directory in order to properly allow the `make deploy
+  <my-host>` command to use those hosts as targets.  
+
+
+##### Inventory Examples:
+
+_customizing the user and connection method:_  
+```ini
+my-host.example.com ansible_connections=ssh ansible_user=myuser
+```
+
+_customizing the port and address:_  
+```ini
+home ansible_port=2222 ansible_host=192.168.1.10
+```
+
+### Additional Installer Variables 
 
 * `RP_INSTALL_DIR` - Defines the rempointer.sh install path _(`default:
   $HOME/bin`)_   
