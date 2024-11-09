@@ -35,3 +35,21 @@
         - name: "Including Uninstall Tasks"
           ansible.builtin.include_tasks:
             file: ./uninstall.yml
+
+    - name: "Enable Timer Block"
+      tags:
+        - enable-timers
+        - never
+      block:
+        - name: "Including Enable Tasks"
+          ansible.builtin.include_tasks:
+            file: ./enable.yml
+
+    - name: "Disable Timer Block"
+      tags:
+        - disable-timers
+        - never
+      block:
+        - name: "Including Disable Tasks"
+          ansible.builtin.include_tasks:
+            file: ./disable.yml

@@ -1,0 +1,7 @@
+[Unit]
+Description=Punch Clock Service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/bash -c 'sleep $((RANDOM % {{ range_window }}))'
+ExecStart={{ install_dir }}/punch.sh -c {{ install_dir }}/punch.conf

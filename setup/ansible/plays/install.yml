@@ -6,7 +6,7 @@
     mode: 0755
   loop: "{{ dirs }}"
 
-- name: "Installing Rempointer Scripts"
+- name: "Installing punch Scripts"
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "{{ install_scripts.dest }}"
@@ -17,17 +17,13 @@
   ansible.builtin.shell:
     cmd: loginctl enable-linger "{{ ansible_user_id }}"
 
-- name: "Installing Rempointer SystemD Timer"
+- name: "Installing punch SystemD Timer"
   ansible.builtin.template:
     src: "{{ item }}"
     dest: "{{ install_services.dest }}"
     mode: 0644
   loop: "{{ install_services.source }}"
 
-- name: "Enabling User Rempointer Timer"
-  ansible.builtin.systemd_service:
-    name: rempointer.timer
-    state: started
-    scope: user
-    enabled: true
-    daemon_reload: true
+- name: "Including Enable Timer"
+  ansible.builtin.include_tasks:
+    file: ./enable.yml
