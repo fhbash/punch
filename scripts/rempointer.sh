@@ -3,6 +3,7 @@
 set -e
 
 VERSION="0.4.1"
+CONF="${RP_CONF:-}"
 KAIROS_USER="${KAIROS_USER:-}"
 KAIROS_PASS="${KAIROS_PASS:-}"
 KAIROS_DATE="$(date +"%d-%m-%Y %H:%M:00")"
@@ -37,6 +38,7 @@ usage() {
     -u  Kairos email
     -p  Kairos Password
     -v  Versao do script
+    -c  Arquivo de Configuracao
     \n\rExample:
      "${0}" -u <email> -p <password>\n"
   exit 0
@@ -92,8 +94,7 @@ punch_clock() {
   [ -s  "${DEBUG_LOG}"-02.stderr ] || rm -f "${DEBUG_LOG}"-02.stderr
   grep -q 'Usuário e/ou senha estão incorretos' "${DEBUG_LOG}"-02.stdout \
     && die "Usuário e/ou senha estão incorretos" || \
-    grep -q 'Usuário não encontrado' "${DEBUG_LOG}"-02.stdout && die "Senha Incorreta" || \
-    printf ''
+    grep -q 'Usuário não encontrado' "${DEBUG_LOG}"-02.stdout && die "Senha Incorreta" ||:
 }
 
 punch_save() {
@@ -117,13 +118,16 @@ version() {
 }
 
 main() {
-  while getopts ":h:u:p:v" o; do
+  while getopts ":h:c:u:p:v:" o; do
     case "${o}" in
     u)
       KAIROS_USER="${OPTARG}"
       ;;
     p)
       KAIROS_PASS="${OPTARG}"
+      ;;
+    c)
+      CONF="${OPTARG}"
       ;;
     v)
       version
@@ -133,16 +137,23 @@ main() {
       ;;
     esac
   done
+
   if [ "$1" = "-v" ]; then 
     exit 0
   fi
-  if [ -z "$KAIROS_USER" ] || [ -z "$KAIROS_PASS" ]; then
+
+  if [ -z "$KAIROS_USER" ] || [ -z "$KAIROS_PASS" ] && [ -z "$CONF" ] ; then
     usage
+  fi
+
+  if [ -n  "${CONF}" ] ; then
+    file="$(realpath "${CONF}" 2>/dev/null || die "Arquivo de configuracao nao encontrado")"
+    . "${file}"
   fi
   
   mkdir -p "${LOGDIR}" "${COMPDIR}" 
   get_cookie
-  punch_clock
+  #punch_clock
   punch_save
 }
 
