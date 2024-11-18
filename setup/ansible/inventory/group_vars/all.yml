@@ -46,5 +46,7 @@ punch_end:
 
 tg_id: "{{ lookup('env', 'RP_TG_ID') }}"
 tg_token: "{{ lookup('env', 'RP_TG_TOKEN') }}"
+pp_url: "{{ lookup('env', 'PAPERLESS_URL') }}"
+pp_token: "{{ lookup('env', 'PAPERLESS_TOKEN') }}"
 kairos_user: "{{ lookup('env', 'KAIROS_USER') }}"
 kairos_pass: "{{ lookup('env', 'KAIROS_PASS') }}"

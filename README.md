@@ -23,6 +23,8 @@ The following variables can be adjusted:
 * `KAIROS_PASS` - Defines the Kairos Pass
 * `TELEGRAM_USER_ID` - Defines Telegram User ID  
 * `TELEGRAM_BOT_TOKEN` - Defines Telegram Bot Token
+* `PAPERLESS_URL` - Defines Paperless URL, e.g: 'http://localhost'  
+* `PAPERLESS_TOKEN` - Defines Paperless API Token  
 
 It also possible to specify a config file with punch like:  
 
@@ -177,6 +179,17 @@ running the `make install ` command.
    can get your id by talking to @JsonDumpBot -- you are interested in
    the "id" field from the "from" object, which is inside "message";
 
+
+## Paperless Integration  
+
+Punch supports sending the receipts to a paperless-ngx server.  
+The following variables customize Paperless integration:  
+
+* `PAPERLESS_URL` - The Paperless Server URL e.g.: "http://my-server". _It's not
+  necessary the entire API endpoint, just the http url server_  
+* `PAPERLESS_TOKEN` - Paperless API Token  
+* `PAPERLESS_CORRESPONDENT` - The correspondent name (`default: kairos`)  
+* `PAPERLESS_TAGS` - Single or list of tags. (`default: ponto`)
 
 ## Saving the Receipts
 
