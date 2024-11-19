@@ -2,7 +2,7 @@
 
 set -e
 
-VERSION="0.5.0"
+VERSION="0.6.0"
 CONF="${RP_CONF:-}"
 KAIROS_USER="${KAIROS_USER:-}"
 KAIROS_PASS="${KAIROS_PASS:-}"
@@ -29,9 +29,15 @@ COOKIE="${DEBUG_LOG}".cookie
 # 4. Get also your own user ID, and add to the TELEGRAM_USER_ID below. You
 #    can get your id by talking to @JsonDumpBot -- you are interested in
 #    the "id" field from the "from" object, which is inside "message";
-TELEGRAM_BOT_TOKEN="${TG_TOKEN:-}"
-TELEGRAM_USER_ID="${TG_ID:-}"
+TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+TELEGRAM_USER_ID="${TELEGRAM_USER_ID:-}"
 
+# Paperless Settings
+PAPERLESS_URL="${PAPERLESS_URL:-}"
+PAPERLESS_API="${PAPERLESS_URL}/api/documents/post_document/"
+PAPERLESS_TOKEN="${PAPERLESS_TOKEN:-}"
+PAPERLESS_TAGS="${PAPERLESS_TAGS:-ponto}"
+PAPERLESS_CORRESPONDENT="${PAPERLESS_CORRESPONDENT:-punch}"
 
 usage() {
   printf "Usage:
@@ -82,6 +88,25 @@ get_cookie() {
   [ -s  "${DEBUG_LOG}"-01.stderr ] || rm -f "${DEBUG_LOG}"-01.stderr
 }
 
+has_pp_setup() {
+  [ -n "${PAPERLESS_URL}" ] || return 1
+  [ -n "${PAPERLESS_TOKEN}" ] || return 1
+  return 0
+}
+
+pp_send(){
+  has_pp_setup || return 0
+
+  printf "Enviando comprovante para Paperless-ngx...\n"
+  curl -s -X POST "${PAPERLESS_API}" \
+      -H "Authorization: Token ${PAPERLESS_TOKEN}" \
+      -F "file=@${COMPROVANTE}" \
+      -F "tags=${PAPERLESS_TAGS}" \
+      -F "correspondent=${PAPERLESS_CORRESPONDENT}" \
+      -o "${DEBUG_LOG}"-03.stdout 2> "${DEBUG_LOG}"-03.stderr || \
+      die "Erro ao enviar o comprovante para Paperless-ngx"
+}
+
 punch_clock() {
   printf 'Batendo Ponto em: %s\n' "${KAIROS_DATE}"
   curl -sL -b "${COOKIE}" -e "${URL}" -A "${USER_AGENT}" \
@@ -111,6 +136,7 @@ punch_save() {
   
   echo "[$(date)] ${KAIROS_DATE}" >> "${LOGFILE}"
   tg_send_message "Ponto registrado com sucesso - ${KAIROS_DATE}"
+  pp_send
 }
 
 version() {
