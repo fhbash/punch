@@ -32,7 +32,7 @@ It also possible to specify a config file with punch like:
 ./scripts/punch.sh -c myconf.conf
 ```
 
-An configuration file [example is available here](./conf/punch.conf)
+A configuration file [example is available here](./conf/punch.conf)
 
 
 _at the moment punch only offers support to punch the clock using the dimep
@@ -41,10 +41,12 @@ interested in extending punch to other time sheet systems_
 
 ## Install
 
-_The simple way to install is bby copying ./scripts/punch.sh to wherever
+_The simple way to install is by copying ./scripts/punch.sh to wherever
 you want, however we have plans to extend punch functionalities and for
-that reason the automated installer is also available, stay tuned to understand
-where the rabbit will be with the next automated installer features to come_
+that reason the automated installer is also available, jump to the [Automated
+Install](#automated-install) section to see where the rabbit can go with the 
+automated installer features_
+
 
 **Installer Dependencies:**  
 * `Ansible 2.15+` - The installer is using [ansible, install it
@@ -81,8 +83,8 @@ _Installing locally and customizing a few settings:_
 KAIROS_USER="my_user" \
 KAIROS_USER="my_pass" \
 RP_INSTALL_DIR="$HOME/my/custom/path" \
-RP_TG_ID="my_telegram_user_id" \
-RP_TG_TOKEN="my_telegram_bot_token" \
+TELEGRAM_USER_ID="my_telegram_user_id" \
+TELEGRAM_BOT_TOKEN="my_telegram_bot_token" \
 make install
 ```
 
@@ -154,6 +156,9 @@ home ansible_port=2222 ansible_host=192.168.1.10
 
 ### Additional Installer Variables 
 
+Those variables works as an alias to other variables. That means you can use either
+to customize punch.
+
 * `RP_INSTALL_DIR` - Defines the punch.sh install path _(`default:
   $HOME/bin`)_   
 * `RP_INSTALL_SVC` - Defined the SystemD timer and service install path,
@@ -163,8 +168,25 @@ home ansible_port=2222 ansible_host=192.168.1.10
 * `RP_PUNCH_START` - Defines the Auto Punch Clock Start _(`default: 08:00`)_  
 * `RP_PUNCH_END` - Defines the Auto Punch Clock End _(`default: 17:20`)_
 
-to customize the installer variable preferences ensure to export the variables before
-running the `make install ` command.  
+to customize the installer variable preferences you can export or declare the variables before
+running the `make install ` command, example:  
+
+* Install timers to punch without a random range window:  
+```bash
+RP_PUNCH_START='09:00' RP_PUNCH_END='18:00' RP_RANGE_WINDOW=0 make install
+```
+
+* Install punch with paperless and telegram:  
+```bash
+PAPERLESS_URL='https://my-paperless.lan' \
+PAPERLESS_TOKEN='MyPaperlessAPIToken \
+TELEGRAM_BOT_TOKEN='MyTelegramBotToken \
+TELEGRAM_USER_ID='MyTelegramUserID' \
+make install
+```
+
+To deploy punch into a remote machine change the `make install` to `make deploy
+my-server`, this will do the same however in a remote host.  
 
 ## Telegram Integration
 
@@ -190,6 +212,10 @@ The following variables customize Paperless integration:
 * `PAPERLESS_TOKEN` - Paperless API Token  
 * `PAPERLESS_CORRESPONDENT` - The correspondent name (`default: kairos`)  
 * `PAPERLESS_TAGS` - Single or list of tags. (`default: ponto`)
+
+The variables can be either exported or set in the config file. Some alias
+variables can also be used during the runtime or installer. Check the
+[Installer variables](#additional-installer-variables).
 
 ## Saving the Receipts
 

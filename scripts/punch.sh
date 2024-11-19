@@ -29,14 +29,15 @@ COOKIE="${DEBUG_LOG}".cookie
 # 4. Get also your own user ID, and add to the TELEGRAM_USER_ID below. You
 #    can get your id by talking to @JsonDumpBot -- you are interested in
 #    the "id" field from the "from" object, which is inside "message";
-TELEGRAM_BOT_TOKEN="${TG_TOKEN:-}"
-TELEGRAM_USER_ID="${TG_ID:-}"
+TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+TELEGRAM_USER_ID="${TELEGRAM_USER_ID:-}"
 
 # Paperless Settings
-PAPERLESS_URL="${PP_URL:-}/api/documents/post_document/"
-PAPERLESS_TOKEN="${PP_TOKEN:-}"
-PAPERLESS_TAGS="${PP_TAGS:-ponto}"
-PAPERLESS_CORRESPONDENT="${PP_CORRESPONDENT:-punch}"
+PAPERLESS_URL="${PAPERLESS_URL:-}"
+PAPERLESS_API="${PAPERLESS_URL}/api/documents/post_document/"
+PAPERLESS_TOKEN="${PAPERLESS_TOKEN:-}"
+PAPERLESS_TAGS="${PAPERLESS_TAGS:-ponto}"
+PAPERLESS_CORRESPONDENT="${PAPERLESS_CORRESPONDENT:-punch}"
 
 usage() {
   printf "Usage:
@@ -97,7 +98,7 @@ pp_send(){
   has_pp_setup || return 0
 
   printf "Enviando comprovante para Paperless-ngx...\n"
-  curl -s -X POST "${PAPERLESS_URL}" \
+  curl -s -X POST "${PAPERLESS_API}" \
       -H "Authorization: Token ${PAPERLESS_TOKEN}" \
       -F "file=@${COMPROVANTE}" \
       -F "tags=${PAPERLESS_TAGS}" \
