@@ -11,5 +11,14 @@
 [._]sw[a-p]
 
 ### Custom ###
-!setup/ansible/inventory/group_vars/all.yml
 setup/ansible/inventory/*
+!setup/ansible/inventory/group_vars/all.yml
+
+conf/*
+!conf/holidays.yml
+!conf/punch.conf
+!conf/punch.service
+!conf/punch.timer
+
+scripts/*
+!scripts/punch.sh

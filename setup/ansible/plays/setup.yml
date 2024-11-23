@@ -2,8 +2,6 @@
 - name: "Setup"
   hosts: all
   gather_subset: env
-  vars_files:
-    - ../inventory/group_vars/all.yml
 
   handlers:
     - name: "Reloading SystemD Daemon"

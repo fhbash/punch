@@ -1,0 +1,18 @@
+---
+# This is an example file, use the variable HOLIDAY_FILE
+# to specify your custom file
+#
+# dates are declared in the format YYYY-mm-dd
+# Examples:
+# Declaring a single holiday
+# - date: 2024-12-31
+#   name: "New Year"
+#
+# Declaring a holiday range
+# - date: 2024-12-31,2025-01-01
+#   name: "New Year"
+#
+# Ranges are declared with comma separated
+# A vacation can be declared with range also e.g.:
+# - date: 2025-02-01,2025-02-15
+#   name: "Vacationing"

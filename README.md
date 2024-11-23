@@ -6,6 +6,23 @@ The Auto Remote Punch Clock
 Have you being forced to punch the clock and constantly submit time sheets?  
 **COMPLAIN NO MORE!** Punch is here to help you on keeping the schedule in the grunt work factory :wink:
 
+* [Start Here - Usage](#usage)  
+    * [General Settings](#settings)
+* [Installing](#install)
+    * [The Automated Install](#automated-install) 
+    * [Installing Locally Examples](#install-locally-examples)
+    * [Deploy - Auto install into a remote machine](#deploy)
+        * [Creating a deploy inventory](#the-inventory)  
+        * [Custom Inventory Examples](#inventory-examples)
+    * [Additional Installer Variables](#additional-installer-variables)
+* [Telegram Integration](#telegram-integration)
+* [Paperless Integration](#paperless-integration)  
+* [Saving the Receipts](#saving-the-receipts)
+* [Managing Timers](#timers)  
+* [Holiday Mode](#holiday-mode)
+    * [Creating Holidays](#creating-holidays)  
+    * [Commenting Holidays](#commenting-holidays)
+
 ## Usage
 
 - Punching the Clock using the current time
@@ -23,10 +40,11 @@ The following variables can be adjusted:
 * `KAIROS_PASS` - Defines the Kairos Pass
 * `TELEGRAM_USER_ID` - Defines Telegram User ID  
 * `TELEGRAM_BOT_TOKEN` - Defines Telegram Bot Token
-* `PAPERLESS_URL` - Defines Paperless URL, e.g: 'http://localhost'  
+* `PAPERLESS_URL` - Defines Paperless URL, e.g: `http://localhost` 
 * `PAPERLESS_TOKEN` - Defines Paperless API Token  
+* `HOLIDAY_FILE` - The full path to a holiday file. [read more](#holiday-mode)
 
-It also possible to specify a config file with punch like:  
+It's also possible to specify a config file with punch like:  
 
 ```bash
 ./scripts/punch.sh -c myconf.conf
@@ -75,7 +93,7 @@ make install
 make uninstall
 ```  
 
-##### Install Locally Examples:
+##### Install Locally Examples
 
 _Installing locally and customizing a few settings:_  
 
@@ -85,6 +103,7 @@ KAIROS_USER="my_pass" \
 RP_INSTALL_DIR="$HOME/my/custom/path" \
 TELEGRAM_USER_ID="my_telegram_user_id" \
 TELEGRAM_BOT_TOKEN="my_telegram_bot_token" \
+HOLIDAY_FILE="./my-holidays.yml" \
 make install
 ```
 
@@ -97,7 +116,7 @@ KAIROS_PASS="\$(secret-tool lookup kairos pass)" \
 make install
 ```
 
-## Deploy:
+## Deploy
 
 It's also possible to deploy punch scripts into a remote machine, using ansible
 inventory fashion.
@@ -131,9 +150,9 @@ To undeploy it use the `undeploy` flag like:
 make undeploy my-host.example.com
 ```
 
-#### The Inventory:  
+#### The Inventory  
 
-* `[./setup/ansible/inventory`](./setup/ansible/inventory) - this is the main
+* [`./setup/ansible/inventory`](./setup/ansible/inventory) - this is the main
   inventory directory. 
 
   [Ansible inventory
@@ -142,7 +161,7 @@ make undeploy my-host.example.com
   <my-host>` command to use those hosts as targets.  
 
 
-##### Inventory Examples:
+##### Inventory Examples
 
 _customizing the user and connection method:_  
 ```ini
@@ -155,9 +174,6 @@ home ansible_port=2222 ansible_host=192.168.1.10
 ```
 
 ### Additional Installer Variables 
-
-Those variables works as an alias to other variables. That means you can use either
-to customize punch.
 
 * `RP_INSTALL_DIR` - Defines the punch.sh install path _(`default:
   $HOME/bin`)_   
@@ -220,7 +236,7 @@ variables can also be used during the runtime or installer. Check the
 ## Saving the Receipts
 
 punch supports saving the punched receipts, by default al receipts will be
-stored in `$HOME/mylogs/comprovantes/`, if telegram is enabled the receipts will
+stored in `$HOME/mylogs/comprovantes/`, if telegram or paperless is enabled the receipts will
 also be sent. Receipts are `.pdf` files named as
 `comprovante-current-date-time.pdf`
 
@@ -252,6 +268,106 @@ make disable
 ```
 
 _by default `enable` and `disable`  use the localhost if no host is specified_
+
+## Holiday Mode
+
+Punch supports a holiday file to make sure it will not punch the clock on
+holidays. A holiday file is a `YAML` file where you can register a list of your
+holidays. Punch will look this file, if todays date matches a date in the
+file it will not punch the clock.
+
+A [holiday file example is available here](./conf/holidays.yml).  
+
+You can create a custom holiday file and install it, those are the supported
+variables of a holiday file:
+
+* `HOLIDAY_FILE` - The path to the holiday file
+
+Examples:  
+
+* Using punch with a holiday file:  
+```bash
+HOLIDAY_FILE="path/to/my-holiday.yml" ./scripts/punch.sh -u user -p pass
+```
+_The same variable can be used in a punch configuration file_  
+
+* Installing a custom holiday file:  
+```bash
+HOLIDAY_FILE="./my-custom-holiday.yml" make install
+```
+_By default this will copu the `my-custom-holiday.yml` into
+`$HOME/bin/my-custom-holiday.yml` it will also configure `$HOME/bin/punch.conf`
+to use this file._
+
+* Uninstalling a custom holiday file:  
+```bash
+HOLIDAY_FILE="./my-custom-holiday.yml" make uninstall
+```
+
+It's also possible to deploy the holiday file using the `make deploy` command.
+
+**NOTE**  
+_By default the holiday file will be installed in the `RP_INSTALL_DIR` with as
+defaults points to "$HOME/bin"._    
+**If you update the holiday file make sure to
+deploy or install it again, using the `make deploy` or `make install` commands,
+this will update your holiday changes into the punch configuration**
+
+### Creating Holidays  
+
+The holiday file is a `YAML` that has the following structure:  
+
+```yaml
+- date: "2024-12-25"
+  name: "Christmas"
+
+- date: "2024-12-31,2025-01-01"
+  name: "New Year"
+
+# - date "2025-02-02"
+#   name: "This will punch since date is commented
+```
+
+When a single `date` is informed punch considers that date as a holiday, and will
+not punch the clock. Multiple dates can be specified as a range by comma
+separated.  
+  
+In the previous example the `New Year` starts at `31` of December and lasts till
+January the First of the next Year. In this example punch will only start 
+again in January the Second aka `2025-01-02`.
+  
+A holiday [file example is available here](./conf/holidays.yml). This file is
+used by default in the punch installation, you can update it and `deploy` or
+`install` as you need.  
+
+##### Commenting Holidays
+
+It's also possible to comment out holidays.
+Dates starting with `#` in front of it, will make punch not threat the date as
+a holiday, Example:    
+
+```yaml
+# - date: 2024-02-02
+#   name: Punch the clock normally
+```
+
+
+**NOTE**  
+_Punch is not using `yq` or any external dependencies to parse the YAML file,
+that means punch looks for YAML format but does not support full YAML parsing.
+In fact any text file with the `date` in the format bellow will be properly parsed by
+punch_   
+  
+_The `date` will properly work using the following syntax:_  
+  
+```yaml
+- date: "YYYY-mm-dd"
+- date: 'YYYY-mm-dd'
+- date: YYYY-mm-dd
+```
+  
+_Other fields are currently optional and are currently not used by punch_
+
 
 
 ...To be continue...
