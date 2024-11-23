@@ -2,7 +2,7 @@
 
 set -e
 
-VERSION="0.6.0"
+VERSION="0.7.0"
 CONF="${RP_CONF:-}"
 KAIROS_USER="${KAIROS_USER:-}"
 KAIROS_PASS="${KAIROS_PASS:-}"
@@ -38,6 +38,12 @@ PAPERLESS_API="${PAPERLESS_URL}/api/documents/post_document/"
 PAPERLESS_TOKEN="${PAPERLESS_TOKEN:-}"
 PAPERLESS_TAGS="${PAPERLESS_TAGS:-ponto}"
 PAPERLESS_CORRESPONDENT="${PAPERLESS_CORRESPONDENT:-punch}"
+
+
+# Holiday Settings
+TODAY="$(date +%Y-%m-%d)"
+HOLIDAY_FILE="${HOLIDAY_FILE:-}"
+HOLIDAY_MSG="Feriado Encontrado Ponto Nao Registrado"
 
 usage() {
   printf "Usage:
@@ -139,6 +145,35 @@ punch_save() {
   pp_send
 }
 
+holiday_search() {
+  for holiday in ${holidays}; do
+    IFS=',' read -r start end <<<"${holiday}"
+    start="$(date -d "${start}" +%s)"
+    end="$(date -d "${end}" +%s)"
+    now="$(date -d "${TODAY}" +%s)"
+     
+    if [[ "${now}" -ge "${start}" ]] && [[ "${now}" -le "${end}" ]]; then
+      echo "${HOLIDAY_MSG}" && tg_send_message "${HOLIDAY_MSG}"
+      return 1
+    fi
+  done
+}
+
+punch_check() {
+  search_holiday="$(grep -v '^#' "${HOLIDAY_FILE}" | awk -F'date:' '{print $2}' | awk -F'["'\''[:space:]]+' '{print $2}')"
+  holidays="$(echo "${search_holiday}" | grep -m1 ${TODAY} || true)"
+  case "${holidays}" in
+    ""|*,*)
+        holidays="$(echo "${search_holiday}"| grep ',' | tr '\n' ' ')"
+        holiday_search
+      ;;
+    *)
+      echo "${HOLIDAY_MSG}" && tg_send_message "${HOLIDAY_MSG}"
+      exit 0
+      ;;
+  esac
+}
+
 version() {
   echo "Versao:${VERSION}"
 }
@@ -177,6 +212,7 @@ main() {
     . "${file}"
   fi
   
+  [ -n "${HOLIDAY_FILE}" ] && punch_check
   mkdir -p "${LOGDIR}" "${COMPDIR}" 
   get_cookie
   punch_clock

@@ -12,6 +12,7 @@
     - "{{ systemd_dir }}/punch.timer"
     - "{{ install_dir }}/punch.sh"
     - "{{ install_dir }}/punch.conf"
+    - "{{ install_dir }}/{{ holiday_file | basename }}"
   notify:
     - user-daemon-reload
     - user-reset-failed

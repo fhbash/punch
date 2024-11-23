@@ -14,10 +14,17 @@ dirs:
   - "{{ install_dir }}"
   - "{{ systemd_dir }}"
 
+holiday_file:
+  "{{
+      lookup('env', 'HOLIDAY_FILE') |
+      default('./conf/holidays.yml', true)
+  }}"
+
 install_scripts:
   source:
     - ../../../scripts/punch.sh
     - ../../../conf/punch.conf
+    - "{{ holiday_file | realpath | dirname }}/{{ holiday_file | basename }}"
   dest: "{{ install_dir }}"
 
 install_services:
