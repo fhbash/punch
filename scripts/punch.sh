@@ -106,7 +106,7 @@ pp_send(){
   printf "Enviando comprovante para Paperless-ngx...\n"
   curl -s -X POST "${PAPERLESS_API}" \
       -H "Authorization: Token ${PAPERLESS_TOKEN}" \
-      -F "file=@${COMPROVANTE}" \
+      -F "document=@${COMPROVANTE}" \
       -F "tags=${PAPERLESS_TAGS}" \
       -F "correspondent=${PAPERLESS_CORRESPONDENT}" \
       -o "${DEBUG_LOG}"-03.stdout 2> "${DEBUG_LOG}"-03.stderr || \
